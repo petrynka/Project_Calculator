@@ -1,7 +1,7 @@
 let a = "";
 let b = "";
 let op = "";
-let finished = false;
+let decimalAllowed = true;
 
 const isDigit = ["1","2","3","4","5","6","7","8","9","0","00","."];
 const isAction = ["+","-","*","/"];
@@ -20,6 +20,7 @@ function changePosNeg(num){
 }
 
 const out = document.querySelector(".display");
+const body = document.querySelector("body");
 
 const buttons = Array.from(document.querySelectorAll(".btns"));
 
@@ -37,11 +38,28 @@ buttons.forEach(button =>{
 
         if(isDigit.includes(key)){
             if (op === "") { 
-                a += key;
+                if (a === "0" && key !== "." && key !== "00") {
+                    a = key;  
+                } else if (a === "0" && key === "00") {
+                    return;   
+                } else if (a === "" && key === "00") {
+                    a = "0";  
+                } else {
+                    a += key; 
+                }
                 updateDisplay(a); 
                 
+                
             } else { 
-                b += key; 
+                if (b === "0" && key !== "." && key !== "00") {
+                    b = key;  
+                } else if (b === "0" && key === "00") {
+                    return;  
+                } else if (b === "" && key === "00") {
+                    b = "0";  
+                } else {
+                    b += key;
+                }
                 updateDisplay(b);
             }
         }else if(isAction.includes(key)){
@@ -79,7 +97,21 @@ buttons.forEach(button =>{
                 a = changePosNeg(a);
                 out.textContent = a;
             }
-        }else if(e.target.innerText == "←"){
+        } else if (e.target.innerText === ".") {
+            if (op === "") {  
+                if (a !== "" && !a.includes(".")) {
+                    a += ".";  
+                }
+                updateDisplay(a);  
+            } else {  
+                if (b === "" || b === "0") {  
+                    b = "0.";  
+                } else if (!b.includes(".")) {  
+                    b += ".";  
+                }
+                updateDisplay(b);  
+            }
+        } else if(e.target.innerText == "←"){
             if (b !== "" && op !== ""){
                 b = b.slice(0,-1);
                 out.textContent = b||"0";
@@ -91,6 +123,74 @@ buttons.forEach(button =>{
     })
 });
 
+body.addEventListener("keydown", (event)=>{
+    if (event.key == "Backspace"){
+        if (b !== "" && op !== ""){
+            b = b.slice(0,-1);
+            out.textContent = b||"0";
+        } else if (a !== ""){
+            a = a.slice(0,-1);
+            out.textContent = a||"0";
+        }
+    }
+});
+
+body.addEventListener("keypress", (event) => {
+    let key = event.key;
+    if(isDigit.includes(key)){
+        if (op === "") { 
+            if (a === "0" && key !== "." && key !== "00") {
+                a = key;  
+            } else if (a === "0" && key === "00") {
+                return;   
+            } else if (a === "" && key === "00") {
+                a = "0";  
+            } else {
+                a += key; 
+            }
+            updateDisplay(a); 
+            
+            
+        } else { 
+            if (b === "0" && key !== "." && key !== "00") {
+                b = key;  
+            } else if (b === "0" && key === "00") {
+                return;  
+            } else if (b === "" && key === "00") {
+                b = "0";  
+            } else {
+                b += key;
+            }
+            updateDisplay(b);
+        }
+    } else if (isAction.includes(key)){
+        if(a !== "" && op !== "" && b !== ""){
+            a = calc.calculate(`${a}`+ " " + `${op}` + " " + `${b}`);
+            a = Math.round(a*1000000000000)/1000000000000;
+            updateDisplay(a);
+            op = key;
+            b = "";
+        } else {
+            op = key;
+            console.log(a,op,b);
+        }
+    } else if (key === "="){
+        if(a == "" || op == "" || b == ""){
+            a = "";
+            b = "";
+            op = "";
+            return out.textContent = "0";
+        } else if(a !== "" && op == "/" && b == "0"){
+            out.textContent = "ERR"
+        }else{
+            a = calc.calculate(`${a}`+ " " + `${op}` + " " + `${b}`);
+            a = Math.round(a*10000000000)/10000000000;
+            updateDisplay(a);
+            op = "";
+            b = "";
+        }
+    }
+});
 
 function Calculator(){
     this.methods={
@@ -110,7 +210,7 @@ function Calculator(){
         if(!this.methods[op] || isNaN(a) || isNaN(b)){
             return NaN;
         }
-        // else if(this.methods[op] == "/" && b == "0") return out.textContent = "ERR";
+        
 
         return this.methods[op](a,b);
     }
